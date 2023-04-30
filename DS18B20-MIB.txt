@@ -1,0 +1,103 @@
+DS18B20-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+	OBJECT-TYPE, Integer32,
+	MODULE-IDENTITY, enterprises          FROM SNMPv2-SMI
+	MODULE-COMPLIANCE, OBJECT-GROUP       FROM SNMPv2-CONF;
+
+edRixon MODULE-IDENTITY
+    LAST-UPDATED "202009200000Z"            -- 29 May 2002, midnight
+    ORGANIZATION "edrixon"
+    CONTACT-INFO "postal:   Ed Rixon
+
+		  email:    ed@ednet.pri
+                 "
+    DESCRIPTION  "
+                  A simple mib for DS18B20 on Raspberry pi.
+                 "
+    ::= { enterprises 56234 }
+
+ds18b20 OBJECT IDENTIFIER ::= { edRixon 1 }
+
+ds18b20Version OBJECT-TYPE
+  SYNTAX        OCTET STRING (SIZE(2))
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "MIB version"
+  ::= { ds18b20 1 }
+
+ds18b20sensorTable OBJECT-TYPE
+  SYNTAX	SEQUENCE OF Ds18b20sensorType
+  MAX-ACCESS    not-accessible
+  STATUS        current
+  DESCRIPTION
+    "Table of sensor information"
+  ::= { ds18b20 2 }
+
+ds18b20sensorType OBJECT-TYPE
+  SYNTAX        Ds18b20sensorType
+  MAX-ACCESS    not-accessible
+  STATUS        current
+  DESCRIPTION
+    "per sensor information"
+  INDEX { ds18b20index }
+  ::= { ds18b20sensorTable 1 }
+
+Ds18b20sensorType ::= SEQUENCE {
+  ds18b20index  Integer32,
+  ds18b20addr   OCTET STRING (SIZE(8)) 
+  ds18b20temp   Integer32
+  }
+
+ds18b20index OBJECT-TYPE
+  SYNTAX        Integer32
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Index into sensor table"
+  ::= { ds18b20sensorType 1 }
+
+ds18b20addr OBJECT-TYPE
+  SYNTAX        OCTET STRING (SIZE(8))
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Device address on 1-wire bus"
+  ::= { ds18b20sensorType 2 }
+
+ds18b20temp OBJECT-TYPE
+  SYNTAX        Integer32
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "The temperature reported by sensor multipled by 100"
+  ::= { ds18b20sensorType 3 }
+
+
+-- Getting a OID:
+--   % snmptranslate -M+. -mNET-SNMP-TUTORIAL-MIB -IR nstSSSecondsSinceChanged
+--   .1.3.6.1.4.1.2021.13.4242.1.1.2
+
+
+-- Getting a textual OID:
+--   % snmptranslate -On -M+. -mNET-SNMP-TUTORIAL-MIB -IR nstSSSecondsSinceChanged
+--   enterprises.ucdavis.ucdExperimental.netSnmpTutorialMIB.nstMIBObjects.nstScalarSet.nstSSSecondsSinceChanged
+
+
+-- Getting a description:
+--   % snmptranslate -Td -M+. -mNET-SNMP-TUTORIAL-MIB -IR nstSSSecondsSinceChanged 
+--   .1.3.6.1.4.1.2021.13.4242.1.1.2
+--   SYNTAX  TimeTicks
+--   UNITS   "1/100th Seconds"
+--   MAX-ACCESS      read-only
+--   STATUS  current
+--   DESCRIPTION     "This object indicates the number of 1/100th seconds since the
+--           nstSSSimpleString object has changed.  If it is has never been
+--           modified, it will be the time passed since the start of the
+--           agent."
+
+
+
+-- END:  Don't forget this!
+END
