@@ -20,3 +20,5 @@ Values are stored and the stored values can be read via SNMP
 
 Has a very basic status page web server but it is intended that the data is read solely via SNMP.
 
+Uses DHCP for IP address, if you want static IP then set it up in DHCP server
+Doesn't support alarms etc, if you want those, use your SNMP manager
