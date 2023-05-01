@@ -6,14 +6,13 @@ IMPORTS
 	MODULE-COMPLIANCE, OBJECT-GROUP       FROM SNMPv2-CONF;
 
 edRixon MODULE-IDENTITY
-    LAST-UPDATED "202009200000Z"            -- 29 May 2002, midnight
+    LAST-UPDATED "202009200000Z"
     ORGANIZATION "edrixon"
     CONTACT-INFO "postal:   Ed Rixon
-
 		  email:    ed@ednet.pri
                  "
     DESCRIPTION  "
-                  A simple mib for DS18B20 on Raspberry pi.
+                  A simple mib for DS18B20.
                  "
     ::= { enterprises 56234 }
 
@@ -74,30 +73,4 @@ ds18b20temp OBJECT-TYPE
     "The temperature reported by sensor multipled by 100"
   ::= { ds18b20sensorType 3 }
 
-
--- Getting a OID:
---   % snmptranslate -M+. -mNET-SNMP-TUTORIAL-MIB -IR nstSSSecondsSinceChanged
---   .1.3.6.1.4.1.2021.13.4242.1.1.2
-
-
--- Getting a textual OID:
---   % snmptranslate -On -M+. -mNET-SNMP-TUTORIAL-MIB -IR nstSSSecondsSinceChanged
---   enterprises.ucdavis.ucdExperimental.netSnmpTutorialMIB.nstMIBObjects.nstScalarSet.nstSSSecondsSinceChanged
-
-
--- Getting a description:
---   % snmptranslate -Td -M+. -mNET-SNMP-TUTORIAL-MIB -IR nstSSSecondsSinceChanged 
---   .1.3.6.1.4.1.2021.13.4242.1.1.2
---   SYNTAX  TimeTicks
---   UNITS   "1/100th Seconds"
---   MAX-ACCESS      read-only
---   STATUS  current
---   DESCRIPTION     "This object indicates the number of 1/100th seconds since the
---           nstSSSimpleString object has changed.  If it is has never been
---           modified, it will be the time passed since the start of the
---           agent."
-
-
-
--- END:  Don't forget this!
 END
