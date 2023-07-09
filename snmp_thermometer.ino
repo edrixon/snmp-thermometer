@@ -5,14 +5,14 @@
 
     Uses uSNMP agent
 
-
     Reads up to four Dallas DS18B20 one-wie temperature sensors and stores values in degrees centigrade
     Values can be read using SNMP OIDs below .1.3.6.1.4.1.56234.1
 
     Board also hosts a single web page to show status
 
-    Blue LED flashes until ESP8266 connects to WiFi network
-    Red LED flashes as each sensor is read (on for 200ms, every five seconds)
+    Red LED on continually when in configuration mode
+    In running mode, blue LED flashes until ESP8266 connects to WiFi network
+    and red LED flashes as each sensor is read (on for 200ms, every five seconds)
 
     One-wire bus on GPIO4
     "setup" switch on GPIO5
@@ -31,7 +31,7 @@
 #include <EEPROM.h>
 
 #define VER_MAJOR       1
-#define VER_MINOR       0
+#define VER_MINOR       2
 
 // Delay at end of loop()
 #define TICK_MS         100
@@ -54,9 +54,9 @@
 // 9 bit resolution
 #define PRECISION       9
 
-// SNMP agent configuration.
+// SNMP agent default configuration.
 #define RO_COMMUNITY    "public"				  
-#define RW_COMMUNITY    "private"  // Not used but needed by SNMP library
+#define RW_COMMUNITY    "privately"  // Not used but needed by SNMP library
 
 // 56234 is allocated by IANA
 #define ENTERPRISE_OID  "B.56234"
@@ -90,6 +90,8 @@ typedef struct
 {
     unsigned char addr[ADDR_LEN];    // Device address
     int temperature;                 // Last temperature read
+    int errors;                      // Number of read errors
+    unsigned long int timestamp;     // millis when reading was taken
 } sensorType;
 
 // HTTP GET request handlers
@@ -137,10 +139,10 @@ eepromType eepromData;
 // Sensor data
 sensorType sensors[MAX_SENSORS] =
 {
-    { "", 1111 },
-    { "", 2222 },
-    { "", 3333 },
-    { "", 4444 }
+    { "", 111, 0 },
+    { "", 222, 0 },
+    { "", 333, 0 },
+    { "", 444, 0 }
 };
 
 // Number of sensors on bus
@@ -306,7 +308,7 @@ void initMibTree()
 
 	// System description
 	thisMib = miblistadd(mibTree, "B.1.1.0", OCTET_STRING, RD_ONLY,
-		sysDescr, strlen(sysDescr));
+	sysDescr, strlen(sysDescr));
 
 	// System up time
 	thisMib = miblistadd(mibTree, "B.1.3.0", TIMETICKS, RD_ONLY, NULL, 0);
@@ -511,6 +513,9 @@ void processSensors()
     if(t == DEVICE_DISCONNECTED_C)
     {
       Serial.println("Error reading temperature");
+
+      sensors[currentSensor].errors = sensors[currentSensor].errors + 1;
+      sensors[currentSensor].temperature = 0;
     }
     else
     {
@@ -518,6 +523,7 @@ void processSensors()
       Serial.println(" C");
 
       sensors[currentSensor].temperature = (int)(t * 10);
+      sensors[currentSensor].timestamp = millis();
     }
 
     // Next sensor to be polled
@@ -962,6 +968,8 @@ void httpStatusPage(char *url)
             httpClient.println(txtBuff);
             sprintf(txtBuff, "    <td>%0.1f degrees</td>", sensors[c].temperature / 10.0);
             httpClient.println(txtBuff);
+            sprintf(txtBuff, "    <td>%d seconds ago</td>", (millis() - sensors[c].timestamp) / 1000);
+            httpClient.println(txtBuff);
             sprintf(txtBuff, "    <td>%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X</td>",
                 sensors[c].addr[0],
                 sensors[c].addr[1],
@@ -980,6 +988,8 @@ void httpStatusPage(char *url)
             {
               httpClient.println("    <td>Unknown device type</td>");
             }
+            sprintf(txtBuff, "    <td>%d read errors</td>", sensors[c].errors);
+            httpClient.println(txtBuff);
             httpClient.println("  </tr>");
         }
         httpClient.println("</table>");
@@ -994,7 +1004,7 @@ void httpStatusPage(char *url)
         httpClient.println("Connect to that to access configuration page at http://192.168.69.99");
 
         httpClient.println("<br><br><p>");
-        sprintf(txtBuff, "Firmware version %d.%d, Ed Rixon", VER_MAJOR, VER_MINOR);
+        sprintf(txtBuff, "Firmware version %d.%d, Ed Rixon, 2023", VER_MAJOR, VER_MINOR);
         httpClient.println(txtBuff);
         httpClient.println("</p>");
 
